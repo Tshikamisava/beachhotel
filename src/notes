@@ -1,0 +1,72 @@
+// Login.js
+
+import React, { useState } from 'react';
+
+const Login = () => {
+  const [showModal, setShowModal] = useState(false);
+
+  const handleLogin = () => {
+    // Implement your login logic here
+    // You can use state or any state management library to handle user authentication
+    // For simplicity, let's just close the modal for now
+    setShowModal(false);
+  };
+
+  return (
+    <div className={`modal ${showModal ? 'is-active' : ''}`}>
+      <div className="modal-background"></div>
+      <div className="modal-content">
+        {/* Your login form goes here */}
+        <h2>Login Form</h2>
+        {/* Add your input fields, labels, and buttons for login */}
+        <button onClick={handleLogin}>Login</button>
+      </div>
+      <button
+        className="modal-close is-large"
+        aria-label="close"
+        onClick={() => setShowModal(false)}
+      ></button>
+    </div>
+  );
+};
+
+export default Login;
+
+/* Add this to your CSS */
+.modal {
+  display: none;
+}
+
+.modal.is-active {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-background {
+  background: rgba(0, 0, 0, 0.6);
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+}
+
+.modal-content {
+  background: #fff;
+  padding: 20px;
+  border-radius: 5px;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  color: #fff;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+
