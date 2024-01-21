@@ -4,22 +4,14 @@ import Banner from '../components/Banner';
 import { Link } from 'react-router-dom';
 import Services from '../components/Services';
 import FeaturedRooms from '../components/FeaturedRooms';
-import Login from '../components/Login';
 
-import Modal from '../components/Modal';
+
+
 
 
 
 export default function Home() {
-  const [isLoginModalOpen, setLoginModalOpen] = useState(false);
 
-  const openLoginModal = () => {
-    setLoginModalOpen(true);
-  };
-
-  const closeLoginModal = () => {
-    setLoginModalOpen(false);
-  };
   return (
     <>
     <Hero>
@@ -32,9 +24,6 @@ export default function Home() {
     <Services />
     <FeaturedRooms />
 
-    <Modal isOpen={isLoginModalOpen} onClose={closeLoginModal}>
-        <Login />
-      </Modal>
     
     </>
   )

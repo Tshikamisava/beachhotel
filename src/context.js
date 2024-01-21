@@ -1,149 +1,119 @@
-// context.js
+import React, { useState, useEffect, useContext } from "react";
+import data from "./data";
+import { auth } from "./firebase";
+import { getAllItems } from "./utils/utils";
 
-import React, { createContext, useState, useEffect } from 'react';
-import items from './data';
+const AppContext = React.createContext();
 
-const RoomContext = React.createContext();
+const AppProvider = ({ children }) => {
+  const cartKey = "user_cart";
+  const bookingKey = "user_bookings";
+  const [hotels, setHotels] = useState(data);
+  const [cart, setCart] = useState(getAllItems(cartKey));
+  const [bookings, setBookings] = useState(getAllItems(bookingKey));
+  const [user, setUser] = useState(null); // Provide a default value
+  const [loading, setLoading] = useState(true);
 
-class RoomProvider extends React.Component {
-  state = {
-    rooms: [],
-    sortedRooms: [],
-    featuredRooms: [],
-    loading: true,
-    type: 'all',
-    capacity: 1,
-    price: 0,
-    minPrice: 0,
-    maxPrice: 0,
-    minSize: 0,
-    maxSize: 0,
-    breakfast: false,
-    pets: false,
-    reservedRooms: [], // New state for reserved rooms
-  };
-
-  componentDidMount() {
+  async function login(email, password) {
     try {
-      let rooms = this.formatData(items);
-      let featuredRooms = rooms.filter((room) => room.featured === true);
-      let maxPrice = Math.max(...rooms.map((item) => item.price));
-
-      let maxSize = Math.max(...rooms.map((item) => item.size));
-
-      this.setState({
-        rooms,
-        featuredRooms,
-        sortedRooms: rooms,
-        loading: false,
-        price: maxPrice,
-        maxPrice,
-        maxSize,
-      });
+      await auth.signInWithEmailAndPassword(email, password);
     } catch (error) {
-      console.error('Error fetching or formatting data:', error);
-      this.setState({ loading: false });
+      console.error("Login failed:", error.message);
+      // Handle error (e.g., show an error message to the user)
     }
   }
 
-  formatData(items) {
-    let tempItems = items.map((item) => {
-      let id = item.sys.id;
-      let images = item.fields.images.map(
-        (image) => image.fields.file.url
-      );
-      let room = { ...item.fields, images, id };
-      return room;
+  async function register(email, password) {
+    try {
+      await auth.createUserWithEmailAndPassword(email, password);
+    } catch (error) {
+      console.error("Registration failed:", error.message);
+      // Handle error (e.g., show an error message to the user)
+    }
+  }
+
+  async function logout() {
+    try {
+      await auth.signOut();
+    } catch (error) {
+      console.error("Logout failed:", error.message);
+      // Handle error (e.g., show an error message to the user)
+    }
+  }
+
+  const updateCart = () => {
+    const answer = getAllItems(cartKey);
+    setCart(answer);
+  };
+
+  const updateBookings = () => {
+    const answer = getAllItems(bookingKey);
+    setBookings(answer);
+  };
+
+  const resetHotels = () => {
+    // Reset hotels to initial data or fetch new data from a server
+    setHotels(data);
+  };
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      setUser(user);
+      setLoading(false);
     });
-    return tempItems;
-  }
 
-  getRoom = (slug) => {
-    let tempRooms = [...this.state.rooms];
-    const room = tempRooms.find((room) => room.slug === slug);
-    return room;
-  };
+    return unsubscribe;
+  }, []);
 
-  handleChange = (event) => {
-    const target = event.target;
-    const value = event.type === 'checkbox' ? target.checked : target.value;
-    const name = event.target.name;
-    this.setState(
-      {
-        [name]: value,
-      },
-      this.filterRooms
+  const search = (searchData) => {
+    const { searchTerm, rating, location } = searchData;
+    const filterData = (field, value) => {
+      let filteredData = data;
+      if (location === "all" && rating === "all") return filteredData;
+      if (location !== "all")
+        filteredData = filteredData.filter(
+          (hotel) => hotel.location === location
+        );
+      if (rating !== "all")
+        filteredData = filteredData.filter((hotel) => hotel.rating >= rating);
+
+      return filteredData;
+    };
+
+    const filteredData = filterData();
+
+    const searchResults = filteredData.filter(
+      (hotel) =>
+        hotel.name.toString().toLowerCase().indexOf(searchTerm.toLowerCase()) >
+        -1
     );
+    setHotels(searchResults);
   };
 
-  filterRooms = () => {
-    let {
-      rooms,
-      type,
-      capacity,
-      price,
-      minSize,
-      maxSize,
-      breakfast,
-      pets,
-    } = this.state;
-
-    // all the rooms
-    let tempRooms = [...rooms];
-    //transform value
-    capacity = parseInt(capacity);
-
-    // filter by type
-    if (type !== 'all') {
-      tempRooms = tempRooms.filter((room) => room.type === type);
-    }
-
-    // filter by capacity
-    if (capacity !== 1) {
-      tempRooms = tempRooms.filter((room) => room.capacity >= capacity);
-    }
-    this.setState({
-      sortedRooms: tempRooms,
-    });
+  const value = {
+    search,
+    login,
+    hotels,
+    cartKey,
+    bookingKey,
+    user,
+    updateCart,
+    updateBookings,
+    cart,
+    bookings,
+    logout,
+    resetHotels,
   };
 
-  reserveRoom = (roomId) => {
-    const roomToReserve = this.state.rooms.find(
-      (room) => room.id === roomId
-    );
-    if (roomToReserve) {
-      this.setState((prevState) => ({
-        reservedRooms: [...prevState.reservedRooms, roomToReserve],
-      }));
-    }
-  };
+  return (
+    <AppContext.Provider value={value}>
+      {!loading && children}
+    </AppContext.Provider>
+  );
+};
 
-  render() {
-    return (
-      <RoomContext.Provider
-        value={{
-          ...this.state,
-          getRoom: this.getRoom,
-          handleChange: this.handleChange,
-          reserveRoom: this.reserveRoom, // corrected function reference
-        }}
-      >
-        {this.props.children}
-      </RoomContext.Provider>
-    );
-  }
-}
+export const useGlobalContext = () => {
+  return useContext(AppContext);
+};
 
-const RoomConsumer = RoomContext.Consumer;
-
-export function withRoomConsumer(Component) {
-  return function ConsumerWrapper(props) {
-    return (
-      <RoomConsumer>
-        {(value) => <Component {...props} context={value} />}
-      </RoomConsumer>
-    );
-  };
-}
-
-export { RoomProvider, RoomConsumer, RoomContext };
+export { AppContext, AppProvider };

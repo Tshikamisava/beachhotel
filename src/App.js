@@ -1,32 +1,36 @@
-// App.js
-
-import React from 'react';
-import './App.css';
-import { RoomProvider } from './context';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Home from './pages/Home';
-import Rooms from './pages/Rooms';
-import SingleRoom from './pages/SingleRoom';
-import Error from './pages/Error';
-import Navbar from './components/Navbar';
-import Bookings from './components/Bookings';
-import Login from './components/Login';
+import React from "react";
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import Navbar from "./components/Navbar/Navbar";
+import PrivateRoute from "./components/PrivateRoute/PrivateRoute";
+import Bookings from "./pages/Bookings/Bookings";
+import Checkout from "./pages/Checkout/Checkout";
+import Home from "./pages/Home/Home";
+import Hotel from "./pages/Hotel/Hotel";
+import Login from "./pages/Login/Login";
+import ErrorPage from "./pages/Error/Error";
+import Register from "./pages/Register/Register";
+import "./App.css";
 
 function App() {
   return (
-    <RoomProvider>
-      
+    <div className="App">
+      <Router>
         <Navbar />
+
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/rooms" element={<Rooms />} />
-          <Route path="/rooms/:slug" element={<SingleRoom />} />
-          <Route path="/bookings" element={<Bookings />} />
           <Route path="/login" element={<Login />} />
-          <Route path="*" element={<Error />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/checkout" element={<Checkout />} />
+          <Route path="/hotel/:id" element={<Hotel />} />
+          <Route
+            path="/bookings"
+            element={<PrivateRoute element={<Bookings />} />}
+          />
+          <Route path="*" element={<ErrorPage />} />
         </Routes>
-      
-    </RoomProvider>
+      </Router>
+    </div>
   );
 }
 
